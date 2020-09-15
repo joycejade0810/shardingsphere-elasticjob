@@ -25,6 +25,7 @@ import org.apache.shardingsphere.elasticjob.executor.item.impl.ClassedJobItemExe
 
 /**
  * Simple job executor.
+ * ***todo 最常用,最具有代表性
  */
 public final class SimpleJobExecutor implements ClassedJobItemExecutor<SimpleJob> {
     

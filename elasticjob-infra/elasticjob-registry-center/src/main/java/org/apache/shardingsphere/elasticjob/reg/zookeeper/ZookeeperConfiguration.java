@@ -23,6 +23,7 @@ import lombok.Setter;
 
 /**
  * Zookeeper configuration.
+ * zk 配置类
  */
 @Getter
 @Setter
@@ -42,6 +43,7 @@ public final class ZookeeperConfiguration {
     
     /**
      * Namespace.
+     * todo 如果你有多个不同 Elastic-Job集群 时，使用相同 Zookeeper，可以配置不同的 namespace 进行隔离。
      */
     private final String namespace;
     

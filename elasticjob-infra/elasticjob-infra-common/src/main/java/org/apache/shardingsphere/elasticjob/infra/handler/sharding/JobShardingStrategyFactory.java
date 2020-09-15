@@ -41,12 +41,11 @@ public final class JobShardingStrategyFactory {
             STRATEGIES.put(each.getType(), each);
         }
     }
-    
+
     /**
-     * Get job sharding sharding.
-     * 
-     * @param type job sharding sharding type
-     * @return job sharding sharding
+     * 获取作业分片策略实例.
+     *
+     * @return 作业分片策略实例
      */
     public static JobShardingStrategy getStrategy(final String type) {
         if (Strings.isNullOrEmpty(type)) {

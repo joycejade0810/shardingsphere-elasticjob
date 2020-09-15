@@ -25,17 +25,33 @@ import org.apache.shardingsphere.elasticjob.reg.base.CoordinatorRegistryCenter;
 
 /**
  * Scheduler facade.
+ * 调度器提供内部服务的门面类
  */
 public final class SchedulerFacade {
-    
+
+    /**
+     * 作业名称
+     */
     private final String jobName;
-    
+
+    /**
+     * 主节点服务
+     */
     private final LeaderService leaderService;
-    
+
+    /**
+     * 作业分片服务
+     */
     private final ShardingService shardingService;
-    
+
+    /**
+     * 执行作业服务
+     */
     private final ExecutionService executionService;
-    
+
+    /**
+     * 调解作业不一致状态服务
+     */
     private final ReconcileService reconcileService;
     
     public SchedulerFacade(final CoordinatorRegistryCenter regCenter, final String jobName) {

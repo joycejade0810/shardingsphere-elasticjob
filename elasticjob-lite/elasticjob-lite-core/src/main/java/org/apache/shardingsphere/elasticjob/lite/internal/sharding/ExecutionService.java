@@ -59,11 +59,11 @@ public final class ExecutionService {
             jobNodeStorage.fillEphemeralJobNode(ShardingNode.getRunningNode(each), "");
         }
     }
-    
+
     /**
-     * Register job completed.
-     * 
-     * @param shardingContexts sharding contexts
+     * 注册作业完成信息.
+     *
+     * @param shardingContexts 分片上下文
      */
     public void registerJobCompleted(final ShardingContexts shardingContexts) {
         JobRegistry.getInstance().setJobRunning(jobName, false);

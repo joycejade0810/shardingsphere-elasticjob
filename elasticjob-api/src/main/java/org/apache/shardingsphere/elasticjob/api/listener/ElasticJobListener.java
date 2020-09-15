@@ -19,6 +19,7 @@ package org.apache.shardingsphere.elasticjob.api.listener;
 
 /**
  * ElasticJob listener.
+ * 监听器
  */
 public interface ElasticJobListener {
     

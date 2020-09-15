@@ -22,9 +22,12 @@ import org.apache.shardingsphere.elasticjob.lite.internal.storage.JobNodePath;
 
 /**
  * Sharding node.
+ * 分片节点路径
  */
 public final class ShardingNode {
-    
+    /**
+     * 执行状态根节点.
+     */
     public static final String ROOT = "sharding";
     
     private static final String INSTANCE_APPENDIX = "instance";

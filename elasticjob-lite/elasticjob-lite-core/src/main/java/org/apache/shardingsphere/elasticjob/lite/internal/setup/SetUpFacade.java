@@ -72,15 +72,21 @@ public final class SetUpFacade {
     
     /**
      * Register start up info.
-     * 
+     * 注册作业启动信息.
      * @param enabled enable job on startup
      */
     public void registerStartUpInfo(final boolean enabled) {
+        // 开启 所有监听器
         listenerManager.startAllListeners();
+        // 选举 主节点
         leaderService.electLeader();
+        // 持久化 作业服务器上线信息
         serverService.persistOnline(enabled);
+        // 持久化 作业运行实例上线相关信息
         instanceService.persistOnline();
+        // 设置 需要重新分片的标记
         shardingService.setReshardingFlag();
+        // 初始化 调解作业不一致状态服务
         if (!reconcileService.isRunning()) {
             reconcileService.startAsync();
         }

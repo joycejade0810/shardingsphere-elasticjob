@@ -21,6 +21,8 @@ import java.util.List;
 
 /**
  * Coordinator registry center.
+ * 协调注册中心
+ * 用于协调分布式服务的注册中心，定义了持久节点、临时节点、持久顺序节点、临时顺序节点等目录服务接口方法，隐性的要求提供事务、分布式锁、数据订阅等特性。
  */
 public interface CoordinatorRegistryCenter extends RegistryCenter {
     

@@ -19,16 +19,17 @@ package org.apache.shardingsphere.elasticjob.infra.context;
 
 /**
  * Execution type.
+ * 执行类型
  */
 public enum ExecutionType {
 
     /**
-     * Ready of execute.
+     * 准备执行的任务.
      */
     READY,
 
     /**
-     * Failover execution.
+     * 失效转移的任务.
      */
     FAILOVER
 }

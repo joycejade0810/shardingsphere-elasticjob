@@ -23,6 +23,7 @@ import org.apache.shardingsphere.elasticjob.lite.internal.storage.JobNodePath;
 
 /**
  * Failover node.
+ * 作业失效转移数据存储路径
  */
 public final class FailoverNode {
     

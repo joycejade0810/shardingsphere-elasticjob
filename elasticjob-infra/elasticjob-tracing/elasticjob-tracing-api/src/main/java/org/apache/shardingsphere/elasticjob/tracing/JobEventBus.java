@@ -34,14 +34,28 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Job event bus.
+ *
+ *
+ * 线程池
+ * 观察者模式
+ * Guava中EventBus AsyncEventBus
  */
 @Slf4j
 public final class JobEventBus {
-    
+
+    /**
+     * 线程池执行服务对象
+     */
     private final ExecutorService executorService;
-    
+
+    /**
+     * 事件总线
+     */
     private final EventBus eventBus;
-    
+
+    /**
+     * 是否注册作业监听器
+     */
     private volatile boolean isRegistered;
     
     public JobEventBus() {
@@ -50,8 +64,12 @@ public final class JobEventBus {
     }
     
     public JobEventBus(final TracingConfiguration tracingConfig) {
+        //todo 事件执行器启动线程数，默认情况下是CPU 个数的两倍
         executorService = createExecutorService(Runtime.getRuntime().availableProcessors() * 2);
+
+        //创建异步总线，注册在其上面的监听器是异步监听执行，事件发布无需阻塞等待监听器执行完逻辑，所以对性能不存在影响。
         eventBus = new AsyncEventBus(executorService);
+        // 注册 事件监听器
         register(tracingConfig);
     }
     

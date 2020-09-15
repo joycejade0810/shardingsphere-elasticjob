@@ -50,13 +50,15 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Registry center of ZooKeeper.
+ * 注册中心
  */
 @Slf4j
 public final class ZookeeperRegistryCenter implements CoordinatorRegistryCenter {
     
     @Getter(AccessLevel.PROTECTED)
     private final ZookeeperConfiguration zkConfig;
-    
+
+    //缓存
     private final Map<String, CuratorCache> caches = new ConcurrentHashMap<>();
     
     @Getter
@@ -65,7 +67,10 @@ public final class ZookeeperRegistryCenter implements CoordinatorRegistryCenter 
     public ZookeeperRegistryCenter(final ZookeeperConfiguration zkConfig) {
         this.zkConfig = zkConfig;
     }
-    
+
+    /**
+     *
+     */
     @Override
     public void init() {
         log.debug("Elastic job: zookeeper registry center init, server lists is: {}.", zkConfig.getServerLists());
@@ -79,6 +84,7 @@ public final class ZookeeperRegistryCenter implements CoordinatorRegistryCenter 
         if (0 != zkConfig.getConnectionTimeoutMilliseconds()) {
             builder.connectionTimeoutMs(zkConfig.getConnectionTimeoutMilliseconds());
         }
+        // 认证
         if (!Strings.isNullOrEmpty(zkConfig.getDigest())) {
             builder.authorization("digest", zkConfig.getDigest().getBytes(StandardCharsets.UTF_8))
                     .aclProvider(new ACLProvider() {
@@ -96,6 +102,7 @@ public final class ZookeeperRegistryCenter implements CoordinatorRegistryCenter 
         }
         client = builder.build();
         client.start();
+        // 连接 Zookeeper
         try {
             if (!client.blockUntilConnected(zkConfig.getMaxSleepTimeMilliseconds() * zkConfig.getMaxRetries(), TimeUnit.MILLISECONDS)) {
                 client.close();
@@ -129,7 +136,12 @@ public final class ZookeeperRegistryCenter implements CoordinatorRegistryCenter 
             Thread.currentThread().interrupt();
         }
     }
-    
+
+    /**
+     * 先从缓存中获取，再从zk中获取
+     * @param key key
+     * @return
+     */
     @Override
     public String get(final String key) {
         CuratorCache cache = findCuratorCache(key);
@@ -151,7 +163,12 @@ public final class ZookeeperRegistryCenter implements CoordinatorRegistryCenter 
         }
         return null;
     }
-    
+
+    /**
+     * 直接从 Zookeeper 获取
+     * @param key key
+     * @return
+     */
     @Override
     public String getDirectly(final String key) {
         try {
@@ -163,7 +180,12 @@ public final class ZookeeperRegistryCenter implements CoordinatorRegistryCenter 
             return null;
         }
     }
-    
+
+    /**
+     * 获取子节点名称集合(降序)
+     * @param key key
+     * @return
+     */
     @Override
     public List<String> getChildrenKeys(final String key) {
         try {
@@ -177,7 +199,12 @@ public final class ZookeeperRegistryCenter implements CoordinatorRegistryCenter 
             return Collections.emptyList();
         }
     }
-    
+
+    /**
+     * 获取子节点数量
+     * @param key key
+     * @return
+     */
     @Override
     public int getNumChildren(final String key) {
         try {
@@ -204,7 +231,12 @@ public final class ZookeeperRegistryCenter implements CoordinatorRegistryCenter 
             return false;
         }
     }
-    
+
+    /**
+     * 存储持久节点数据。逻辑等价于 insertOrUpdate 操作
+     * @param key key
+     * @param value value
+     */
     @Override
     public void persist(final String key, final String value) {
         try {
@@ -219,7 +251,12 @@ public final class ZookeeperRegistryCenter implements CoordinatorRegistryCenter 
             RegExceptionHandler.handleException(ex);
         }
     }
-    
+
+    /**
+     * 使用事务校验键( key )存在才进行更新
+     * @param key key
+     * @param value value
+     */
     @Override
     public void update(final String key, final String value) {
         try {
@@ -231,7 +268,12 @@ public final class ZookeeperRegistryCenter implements CoordinatorRegistryCenter 
             RegExceptionHandler.handleException(ex);
         }
     }
-    
+
+    /**
+     * 存储临时节点数据。节点类型无法变更，因此如果数据已存在，需要先进行删除。
+     * @param key key
+     * @param value value
+     */
     @Override
     public void persistEphemeral(final String key, final String value) {
         try {
@@ -268,7 +310,11 @@ public final class ZookeeperRegistryCenter implements CoordinatorRegistryCenter 
             RegExceptionHandler.handleException(ex);
         }
     }
-    
+
+    /**
+     * 移除注册数据
+     * @param key key
+     */
     @Override
     public void remove(final String key) {
         try {
@@ -279,7 +325,13 @@ public final class ZookeeperRegistryCenter implements CoordinatorRegistryCenter 
             RegExceptionHandler.handleException(ex);
         }
     }
-    
+
+    /**
+     * 获取注册中心当前时间
+     * 通过更新节点，获得该节点的最后更新时间( mtime )获得 Zookeeper 的时间
+     * @param key key
+     * @return
+     */
     @Override
     public long getRegistryCenterTime(final String key) {
         long result = 0L;
@@ -312,7 +364,11 @@ public final class ZookeeperRegistryCenter implements CoordinatorRegistryCenter 
         }
         caches.put(cachePath + "/", cache);
     }
-    
+
+    /**
+     * 关闭作业缓存
+     * @param cachePath cache path
+     */
     @Override
     public void evictCacheData(final String cachePath) {
         CuratorCache cache = caches.remove(cachePath + "/");

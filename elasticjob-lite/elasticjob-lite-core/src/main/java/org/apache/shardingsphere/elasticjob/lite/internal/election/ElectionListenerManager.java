@@ -59,27 +59,41 @@ public final class ElectionListenerManager extends AbstractListenerManager {
     }
     
     class LeaderElectionJobListener extends AbstractJobListener {
-        
+
+        /**
+         * 节点数据发生变化,重新选举主节点
+         */
         @Override
         protected void dataChanged(final String path, final Type eventType, final String data) {
             if (!JobRegistry.getInstance().isShutdown(jobName) && (isActiveElection(path, data) || isPassiveElection(path, eventType))) {
                 leaderService.electLeader();
             }
         }
-        
+
+        /**
+         * 主动选举
+         */
         private boolean isActiveElection(final String path, final String data) {
-            return !leaderService.hasLeader() && isLocalServerEnabled(path, data);
+            return !leaderService.hasLeader() // 不存在主节点
+                    && isLocalServerEnabled(path, data);// 开启作业
         }
-        
+
+        /**
+         * 被动选举
+         */
         private boolean isPassiveElection(final String path, final Type eventType) {
             JobInstance jobInstance = JobRegistry.getInstance().getJobInstance(jobName);
-            return !Objects.isNull(jobInstance) && isLeaderCrashed(path, eventType) && serverService.isAvailableServer(jobInstance.getIp());
+            return !Objects.isNull(jobInstance) // 主节点 Crashed
+                    && isLeaderCrashed(path, eventType) && serverService.isAvailableServer(jobInstance.getIp());// 当前节点正在运行中（未挂掉）
         }
         
         private boolean isLeaderCrashed(final String path, final Type eventType) {
             return leaderNode.isLeaderInstancePath(path) && Type.NODE_DELETED == eventType;
         }
-        
+
+        /**
+         * 判断开启作业方法
+         */
         private boolean isLocalServerEnabled(final String path, final String data) {
             return serverNode.isLocalServerPath(path) && !ServerStatus.DISABLED.name().equals(data);
         }

@@ -28,11 +28,15 @@ import org.apache.shardingsphere.elasticjob.infra.yaml.YamlEngine;
 
 /**
  * Configuration service.
+ * 作业配置服务
+ * 多个 Elastic-Job-Lite 使用相同注册中心和相同 namespace 组成集群，实现高可用。集群中，使用作业配置服务( ConfigurationService ) 共享作业配置。
  */
 public final class ConfigurationService {
-    
+
+    //时间服务，提供当前时间查询
     private final TimeService timeService;
-    
+
+    //封装注册中心，提供存储服务
     private final JobNodeStorage jobNodeStorage;
     
     public ConfigurationService(final CoordinatorRegistryCenter regCenter, final String jobName) {
@@ -42,9 +46,10 @@ public final class ConfigurationService {
     
     /**
      * Load job configuration.
-     * 
-     * @param fromCache load from cache or not
-     * @return job configuration
+     * 读取作业配置.
+     *
+     * @param fromCache load from cache or not  是否从缓存中读取
+     * @return job configuration  作业配置
      */
     public JobConfiguration load(final boolean fromCache) {
         String result;
@@ -61,13 +66,16 @@ public final class ConfigurationService {
     
     /**
      * Set up job configuration.
+     * 设置作业配置
      * 
      * @param jobClassName job class name
      * @param jobConfig job configuration to be updated
      * @return accepted job configuration
      */
     public JobConfiguration setUpJobConfiguration(final String jobClassName, final JobConfiguration jobConfig) {
+        //校验注册中心存储的作业配置的作业实现类全路径( jobClass )和当前的是否相同，如果不同，则认为是冲突，不允许存储
         checkConflictJob(jobClassName, jobConfig);
+        //当注册中心未存储该作业配置 或者 当前作业配置允许替换注册中心作业配置( overwrite = true )时，持久化作业配置。
         if (!jobNodeStorage.isJobNodeExisted(ConfigurationNode.ROOT) || jobConfig.isOverwrite()) {
             jobNodeStorage.replaceJobNode(ConfigurationNode.ROOT, YamlEngine.marshal(JobConfigurationPOJO.fromJobConfiguration(jobConfig)));
             jobNodeStorage.replaceJobRootNode(jobClassName);
@@ -89,7 +97,9 @@ public final class ConfigurationService {
     
     /**
      * Check max time different seconds tolerable between job server and registry center.
-     * 
+     * 检查本机与注册中心的时间误差秒数是否在允许范围
+     * todo Elastic-Job-Lite 作业触发是依赖本机时间，相同集群使用注册中心时间为基准
+     *
      * @throws JobExecutionEnvironmentException throe JobExecutionEnvironmentException if exceed max time different seconds
      */
     public void checkMaxTimeDiffSecondsTolerable() throws JobExecutionEnvironmentException {

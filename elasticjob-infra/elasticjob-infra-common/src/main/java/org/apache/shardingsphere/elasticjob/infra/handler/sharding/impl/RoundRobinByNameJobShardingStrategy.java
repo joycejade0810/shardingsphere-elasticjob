@@ -26,6 +26,12 @@ import java.util.Map;
 
 /**
  * Sharding strategy which for round robin by name job.
+ * 根据作业名的哈希值对作业节点列表进行轮转的分片策略。
+ *
+ * AverageAllocationJobShardingStrategy的缺点是，一旦分片数小于作业作业节点数，作业将永远分配至IP地址靠前的作业节点，导致IP地址靠后的作业节点空闲。如：
+ * OdevitySortByNameJobShardingStrategy则可以根据作业名称重新分配作业节点负载。
+ * 如果有3台作业节点，分成2片，作业名称的哈希值为奇数，则每台作业节点分到的分片是：1=[0], 2=[1], 3=[]
+ * 如果有3台作业节点，分成2片，作业名称的哈希值为偶数，则每台作业节点分到的分片是：3=[0], 2=[1], 1=[]
  */
 public final class RoundRobinByNameJobShardingStrategy implements JobShardingStrategy {
     

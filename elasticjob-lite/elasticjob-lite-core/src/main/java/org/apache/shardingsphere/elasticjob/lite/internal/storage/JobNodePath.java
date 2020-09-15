@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * Job node path.
- * 
+ * 作业节点路径类  作业节点是在普通的节点前加上作业名称的前缀
  * <p>
  * Job node is add job name as prefix.
  * </p>

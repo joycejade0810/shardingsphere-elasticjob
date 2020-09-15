@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * Tracing configuration.
+ * 跟踪配置
  * 
  * @param <T> type of tracing storage
  */

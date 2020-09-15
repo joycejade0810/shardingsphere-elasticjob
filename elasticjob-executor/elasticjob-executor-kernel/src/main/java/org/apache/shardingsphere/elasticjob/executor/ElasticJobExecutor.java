@@ -41,6 +41,7 @@ import java.util.concurrent.ExecutorService;
 
 /**
  * ElasticJob executor.
+ * 执行器
  */
 @Slf4j
 public final class ElasticJobExecutor {
@@ -82,12 +83,16 @@ public final class ElasticJobExecutor {
      */
     public void execute() {
         try {
+            //todo 1.检查环境配置 方法校验本机时间是否合法
             jobFacade.checkJobExecutionEnvironment();
         } catch (final JobExecutionEnvironmentException cause) {
             jobErrorHandler.handleException(jobConfig.getJobName(), cause);
         }
+        //todo 2.获取 当前作业服务器的分片上下文
         ShardingContexts shardingContexts = jobFacade.getShardingContexts();
+        //todo 3.发布作业状态追踪事件
         jobFacade.postJobStatusTraceEvent(shardingContexts.getTaskId(), State.TASK_STAGING, String.format("Job '%s' execute begin.", jobConfig.getJobName()));
+        //todo 4.跳过 存在运行中的被错过作业
         if (jobFacade.misfireIfRunning(shardingContexts.getShardingItemParameters().keySet())) {
             jobFacade.postJobStatusTraceEvent(shardingContexts.getTaskId(), State.TASK_FINISHED, String.format(
                     "Previous job '%s' - shardingItems '%s' is still running, misfired job will start after previous job completed.", jobConfig.getJobName(),
@@ -95,19 +100,24 @@ public final class ElasticJobExecutor {
             return;
         }
         try {
+            //todo 5.执行job前置监听
             jobFacade.beforeJobExecuted(shardingContexts);
             //CHECKSTYLE:OFF
         } catch (final Throwable cause) {
             //CHECKSTYLE:ON
             jobErrorHandler.handleException(jobConfig.getJobName(), cause);
         }
+        //todo 6.执行job
         execute(shardingContexts, ExecutionSource.NORMAL_TRIGGER);
+        // 执行 被跳过触发的作业
         while (jobFacade.isExecuteMisfired(shardingContexts.getShardingItemParameters().keySet())) {
             jobFacade.clearMisfire(shardingContexts.getShardingItemParameters().keySet());
             execute(shardingContexts, ExecutionSource.MISFIRE);
         }
+        //todo 7.判断job是否需要失败转移
         jobFacade.failoverIfNecessary();
         try {
+            //todo 8.执行job后置监听器
             jobFacade.afterJobExecuted(shardingContexts);
             //CHECKSTYLE:OFF
         } catch (final Throwable cause) {
@@ -115,7 +125,13 @@ public final class ElasticJobExecutor {
             jobErrorHandler.handleException(jobConfig.getJobName(), cause);
         }
     }
-    
+
+    /**
+     * 执行多个作业的分片
+     *
+     * @param shardingContexts 分片上下文集合
+     * @param executionSource 执行来源
+     */
     private void execute(final ShardingContexts shardingContexts, final ExecutionSource executionSource) {
         if (shardingContexts.getShardingItemParameters().isEmpty()) {
             jobFacade.postJobStatusTraceEvent(shardingContexts.getTaskId(), State.TASK_FINISHED, String.format("Sharding item for job '%s' is empty.", jobConfig.getJobName()));
@@ -136,15 +152,26 @@ public final class ElasticJobExecutor {
             }
         }
     }
-    
+
+    /**
+     * 执行多个作业的分片
+     *
+     * @param shardingContexts 分片上下文集合
+     * @param executionSource 执行来源
+     *
+     * 分配单分片项时，直接执行，无需使用线程池，性能更优。
+     * 分配多分片项时，使用线程池并发执行，通过 CountDownLatch 实现等待分片项全部执行完成。
+     */
     private void process(final ShardingContexts shardingContexts, final ExecutionSource executionSource) {
         Collection<Integer> items = shardingContexts.getShardingItemParameters().keySet();
-        if (1 == items.size()) {
+        if (1 == items.size()) {//todo.只有一个分片，立即执行
             int item = shardingContexts.getShardingItemParameters().keySet().iterator().next();
             JobExecutionEvent jobExecutionEvent = new JobExecutionEvent(IpUtils.getHostName(), IpUtils.getIp(), shardingContexts.getTaskId(), jobConfig.getJobName(), executionSource, item);
             process(shardingContexts, item, jobExecutionEvent);
             return;
         }
+
+        //todo 多个分片并发执行，使用了CountDownLatch
         CountDownLatch latch = new CountDownLatch(items.size());
         for (int each : items) {
             JobExecutionEvent jobExecutionEvent = new JobExecutionEvent(IpUtils.getHostName(), IpUtils.getIp(), shardingContexts.getTaskId(), jobConfig.getJobName(), executionSource, each);
@@ -153,34 +180,49 @@ public final class ElasticJobExecutor {
             }
             executorService.submit(() -> {
                 try {
+                    // 执行一个作业
                     process(shardingContexts, each, jobExecutionEvent);
                 } finally {
                     latch.countDown();
                 }
             });
         }
+        // 等待多分片全部完成
         try {
             latch.await();
         } catch (final InterruptedException ex) {
             Thread.currentThread().interrupt();
         }
     }
-    
+
+    /**
+     * 执行单个作业的分片
+     *
+     * @param shardingContexts 分片上下文集合
+     * @param item 分片序号
+     * @param startEvent 执行事件(开始)
+     */
     @SuppressWarnings("unchecked")
     private void process(final ShardingContexts shardingContexts, final int item, final JobExecutionEvent startEvent) {
+        // 发布执行事件(开始)
         jobFacade.postJobExecutionEvent(startEvent);
         log.trace("Job '{}' executing, item is: '{}'.", jobConfig.getJobName(), item);
         JobExecutionEvent completeEvent;
         try {
+            // 执行单个作业
             jobItemExecutor.process(elasticJob, jobConfig, jobFacade, shardingContexts.createShardingContext(item));
+            // 发布执行事件(成功)
             completeEvent = startEvent.executionSuccess();
             log.trace("Job '{}' executed, item is: '{}'.", jobConfig.getJobName(), item);
             jobFacade.postJobExecutionEvent(completeEvent);
             // CHECKSTYLE:OFF
         } catch (final Throwable cause) {
             // CHECKSTYLE:ON
+
+            // 发布执行事件(失败)
             completeEvent = startEvent.executionFailure(ExceptionUtils.transform(cause));
             jobFacade.postJobExecutionEvent(completeEvent);
+            // 设置该分片执行异常信息
             itemErrorMessages.put(item, ExceptionUtils.transform(cause));
             jobErrorHandler.handleException(jobConfig.getJobName(), cause);
         }

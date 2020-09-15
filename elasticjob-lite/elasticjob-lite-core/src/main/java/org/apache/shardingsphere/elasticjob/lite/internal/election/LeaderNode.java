@@ -21,6 +21,7 @@ import org.apache.shardingsphere.elasticjob.lite.internal.storage.JobNodePath;
 
 /**
  * Leader path node.
+ * 主节点路径
  */
 public final class LeaderNode {
     

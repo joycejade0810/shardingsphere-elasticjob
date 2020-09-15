@@ -28,6 +28,10 @@ import java.util.List;
 
 /**
  * Dataflow job executor.
+ * 数据流式执行器
+ * 支持两种模式
+ *    一次性的数据流（连续的特殊形势）
+ *    连续的数据流处理
  */
 public final class DataflowJobExecutor implements ClassedJobItemExecutor<DataflowJob> {
     
@@ -39,7 +43,14 @@ public final class DataflowJobExecutor implements ClassedJobItemExecutor<Dataflo
             oneOffExecute(elasticJob, shardingContext);
         }
     }
-    
+
+    /**
+     * 流式处理
+     * 不断加载数据，不断处理数据，直到数据为空 或者 作业不适合继续运行：
+     * 如果采用流式作业处理方式，建议processData处理数据后更新其状态，避免fetchData再次抓取到，从而使得作业永不停止。 流式数据处理参照TbSchedule设计，适用于不间歇的数据处理。
+     * 作业需要重新分片，所以不适合继续流式数据处理。
+     * @param shardingContext 分片上下文
+     */
     private void streamingExecute(final DataflowJob elasticJob, final JobConfiguration jobConfig, final JobFacade jobFacade, final ShardingContext shardingContext) {
         List<Object> data = fetchData(elasticJob, shardingContext);
         while (null != data && !data.isEmpty()) {
@@ -54,19 +65,36 @@ public final class DataflowJobExecutor implements ClassedJobItemExecutor<Dataflo
     private boolean isEligibleForJobRunning(final JobConfiguration jobConfig, final JobFacade jobFacade) {
         return !jobFacade.isNeedSharding() && Boolean.parseBoolean(jobConfig.getProps().getOrDefault(DataflowJobProperties.STREAM_PROCESS_KEY, false).toString());
     }
-    
+
+    /**
+     * 一次处理
+     *
+     * @param shardingContext 分片上下文
+     */
     private void oneOffExecute(final DataflowJob elasticJob, final ShardingContext shardingContext) {
         List<Object> data = fetchData(elasticJob, shardingContext);
         if (null != data && !data.isEmpty()) {
             processData(elasticJob, shardingContext, data);
         }
     }
-    
+
+    /**
+     * 加载数据
+     *
+     * @param shardingContext 分片上下文
+     * @return 数据
+     */
     @SuppressWarnings("unchecked")
     private List<Object> fetchData(final DataflowJob elasticJob, final ShardingContext shardingContext) {
         return elasticJob.fetchData(shardingContext);
     }
-    
+
+    /**
+     * 处理数据
+     *
+     * @param shardingContext 分片上下文
+     * @param data 数据
+     */
     @SuppressWarnings("unchecked")
     private void processData(final DataflowJob elasticJob, final ShardingContext shardingContext, final List<Object> data) {
         elasticJob.processData(shardingContext, data);

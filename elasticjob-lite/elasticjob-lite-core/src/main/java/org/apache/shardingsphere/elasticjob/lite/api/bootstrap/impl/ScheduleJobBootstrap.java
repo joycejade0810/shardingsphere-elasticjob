@@ -28,7 +28,8 @@ import org.apache.shardingsphere.elasticjob.lite.internal.schedule.JobScheduler;
 import org.apache.shardingsphere.elasticjob.tracing.api.TracingConfiguration;
 
 /**
- * Schedule job bootstrap.
+ * Schedule job bootstrap-引导程序.
+ *
  */
 public final class ScheduleJobBootstrap implements JobBootstrap {
     

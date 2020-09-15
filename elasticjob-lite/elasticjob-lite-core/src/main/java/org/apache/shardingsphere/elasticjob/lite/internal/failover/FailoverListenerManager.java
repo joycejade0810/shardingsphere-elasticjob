@@ -32,6 +32,7 @@ import java.util.List;
 
 /**
  * Failover listener manager.
+ * 作业失效转移监听管理器
  */
 public final class FailoverListenerManager extends AbstractListenerManager {
     

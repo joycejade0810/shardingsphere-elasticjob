@@ -27,6 +27,7 @@ import java.util.UUID;
 
 /**
  * Job status trace event.
+ * 作业状态追踪事件
  */
 @RequiredArgsConstructor
 @AllArgsConstructor

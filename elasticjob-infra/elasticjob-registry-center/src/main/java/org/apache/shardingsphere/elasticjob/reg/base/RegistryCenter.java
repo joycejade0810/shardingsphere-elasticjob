@@ -19,6 +19,8 @@ package org.apache.shardingsphere.elasticjob.reg.base;
 
 /**
  * Registry center.
+ * 注册中心
+ * 定义了简单的增删改查注册数据和查询时间的接口方法。
  */
 public interface RegistryCenter {
     

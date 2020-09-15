@@ -33,6 +33,7 @@ import java.util.List;
 
 /**
  * Job node storage.
+ * 作业节点数据访问类
  */
 public final class JobNodeStorage {
     
@@ -47,10 +48,10 @@ public final class JobNodeStorage {
         this.jobName = jobName;
         jobNodePath = new JobNodePath(jobName);
     }
-    
+
     /**
-     * Judge is job node existed or not.
-     * 
+     * 判断作业节点是否存在.
+     *
      * @param node node
      * @return is job node existed or not
      */
@@ -105,13 +106,12 @@ public final class JobNodeStorage {
     public String getJobRootNodeData() {
         return regCenter.get("/" + jobName);
     }
-    
+
     /**
-     * Create job node if needed.
-     * 
-     * <p>Do not create node if root root not existed, which means job is shutdown.</p>
-     * 
-     * @param node node
+     * 如果存在则创建作业节点.
+     * 如果作业根节点不存在表示作业已经停止, 不再继续创建节点.
+     *
+     * @param node 作业节点名称
      */
     public void createJobNodeIfNeeded(final String node) {
         if (isJobRootNodeExisted() && !isJobNodeExisted(node)) {
@@ -121,7 +121,7 @@ public final class JobNodeStorage {
     
     /**
      * Remove job node if existed.
-     * 
+     * 移除分配的作业分片项正在运行中的标记，表示作业分片项不在运行中状态
      * @param node node
      */
     public void removeJobNodeIfExisted(final String node) {
@@ -181,7 +181,8 @@ public final class JobNodeStorage {
     
     /**
      * Execute operator in transaction.
-     * 
+     * 开启事务，执行 TransactionExecutionCallback 回调逻辑，提交事务。
+     *
      * @param callback transaction execution callback
      */
     public void executeInTransaction(final TransactionExecutionCallback callback) {

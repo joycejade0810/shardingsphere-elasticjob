@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Job Listener.
+ * job监听器
  */
 public abstract class AbstractJobListener implements CuratorCacheListener {
     
@@ -39,6 +40,7 @@ public abstract class AbstractJobListener implements CuratorCacheListener {
         }
         dataChanged(path, type, null == data ? "" : new String(data, StandardCharsets.UTF_8));
     }
-    
+
+
     protected abstract void dataChanged(String path, Type eventType, String data);
 }

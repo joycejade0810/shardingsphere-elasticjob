@@ -75,53 +75,69 @@ public final class ShardingService {
         executionService = new ExecutionService(regCenter, jobName);
         jobNodePath = new JobNodePath(jobName);
     }
-    
     /**
-     * Set resharding flag.
+     * 设置需要重新分片的标记.
      */
     public void setReshardingFlag() {
         jobNodeStorage.createJobNodeIfNeeded(ShardingNode.NECESSARY);
     }
-    
+
     /**
-     * Judge is need resharding or not.
-     * 
-     * @return is need resharding or not
+     * 判断是否需要重分片.
+     *  四种情况
+     *      第一种，注册作业启动信息时
+     *      第二种，作业分片总数( JobCoreConfiguration.shardingTotalCount )变化时
+     *      第三种，服务器变化时
+         *          第一种，#isServerChange(…) 服务器被开启或禁用。
+         *          第二种，#isInstanceChange(…) 作业节点新增或者移除。
+     * @return 是否需要重分片
      */
     public boolean isNeedSharding() {
         return jobNodeStorage.isJobNodeExisted(ShardingNode.NECESSARY);
     }
     
     /**
-     * Sharding if necessary.
+     * ****作业分片.
      * 
      * <p>
-     * Sharding if current job server is leader server;
-     * Do not sharding if no available job server. 
+     * 如果需要分片且当前节点为主节点, 则作业分片.
+     * 如果当前无可用节点则不分片.
      * </p>
      */
     public void shardingIfNecessary() {
         List<JobInstance> availableJobInstances = instanceService.getAvailableJobInstances();
-        if (!isNeedSharding() || availableJobInstances.isEmpty()) {
+        if (!isNeedSharding() || availableJobInstances.isEmpty()) { // 判断是否需要重新分片
             return;
         }
+        // 【非主节点】等待 作业分片项分配完成
         if (!leaderService.isLeaderUntilBlock()) {
             blockUntilShardingCompleted();
             return;
         }
+        // 【主节点】作业分片项分配
+        // 等待 作业未在运行中状态
         waitingOtherShardingItemCompleted();
         JobConfiguration jobConfig = configService.load(false);
         int shardingTotalCount = jobConfig.getShardingTotalCount();
+        // 设置 作业正在重分片的标记
         log.debug("Job '{}' sharding begin.", jobName);
         jobNodeStorage.fillEphemeralJobNode(ShardingNode.PROCESSING, "");
+        // 重置 作业分片项信息
         resetShardingInfo(shardingTotalCount);
+        // 【事务中】设置 作业分片项信息
         JobShardingStrategy jobShardingStrategy = JobShardingStrategyFactory.getStrategy(jobConfig.getJobShardingStrategyType());
         jobNodeStorage.executeInTransaction(new PersistShardingInfoTransactionExecutionCallback(jobShardingStrategy.sharding(availableJobInstances, jobName, shardingTotalCount)));
         log.debug("Job '{}' sharding complete.", jobName);
     }
-    
+
+    /**
+     * 【非主节点】等待作业分片项分配完成。
+     */
     private void blockUntilShardingCompleted() {
-        while (!leaderService.isLeaderUntilBlock() && (jobNodeStorage.isJobNodeExisted(ShardingNode.NECESSARY) || jobNodeStorage.isJobNodeExisted(ShardingNode.PROCESSING))) {
+        while (!leaderService.isLeaderUntilBlock() // 当前作业节点不为【主节点】
+                && (jobNodeStorage.isJobNodeExisted(ShardingNode.NECESSARY) // 存在作业需要重分片的标记
+                || jobNodeStorage.isJobNodeExisted(ShardingNode.PROCESSING)) // 存在作业正在重分片的标记
+        ) {
             log.debug("Job '{}' sleep short time until sharding completed.", jobName);
             BlockUtils.waitingShortTime();
         }
@@ -135,14 +151,19 @@ public final class ShardingService {
     }
     
     private void resetShardingInfo(final int shardingTotalCount) {
+        // 重置 有效的作业分片项
         for (int i = 0; i < shardingTotalCount; i++) {
             jobNodeStorage.removeJobNodeIfExisted(ShardingNode.getInstanceNode(i));
+            // /${JOB_NAME}/sharding/${ITEM_ID}/instance
             jobNodeStorage.createJobNodeIfNeeded(ShardingNode.ROOT + "/" + i);
+            // /${JOB_NAME}/sharding/${ITEM_ID}
         }
+        // 移除 多余的作业分片项
         int actualShardingTotalCount = jobNodeStorage.getJobNodeChildrenKeys(ShardingNode.ROOT).size();
         if (actualShardingTotalCount > shardingTotalCount) {
             for (int i = shardingTotalCount; i < actualShardingTotalCount; i++) {
                 jobNodeStorage.removeJobNodeIfExisted(ShardingNode.ROOT + "/" + i);
+                // /${JOB_NAME}/sharding/${ITEM_ID}
             }
         }
     }

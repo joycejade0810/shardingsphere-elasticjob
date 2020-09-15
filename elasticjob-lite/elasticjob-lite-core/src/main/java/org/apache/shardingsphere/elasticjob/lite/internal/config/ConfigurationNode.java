@@ -21,6 +21,7 @@ import org.apache.shardingsphere.elasticjob.lite.internal.storage.JobNodePath;
 
 /**
  * Configuration node.
+ * 配置节点路径
  */
 public final class ConfigurationNode {
     

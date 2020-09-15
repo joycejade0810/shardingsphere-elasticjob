@@ -33,6 +33,9 @@ import java.util.List;
 
 /**
  * Listener manager facade.
+ * 作业注册中心的监听器管理者
+ *   监听管理器
+ *   注册中心连接状态监听器
  */
 public final class ListenerManager {
     

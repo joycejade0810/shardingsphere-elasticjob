@@ -35,15 +35,22 @@ import org.quartz.TriggerKey;
  */
 @RequiredArgsConstructor
 public final class JobScheduleController {
-    
+    /**
+     * Quartz 调度器
+     */
     private final Scheduler scheduler;
-    
+    /**
+     * 作业信息
+     */
     private final JobDetail jobDetail;
-    
+    /**
+     * 触发器编号
+     * 目前使用工作名字( jobName )
+     */
     private final String triggerIdentity;
     
     /**
-     * Execute job.
+     * Execute job.--执行job
      */
     public void executeJob() {
         try {
@@ -63,8 +70,8 @@ public final class JobScheduleController {
     }
     
     /**
-     * Schedule job.
-     * 
+     * Schedule job.-设置cron表达式
+     *
      * @param cron CRON expression
      */
     public void scheduleJob(final String cron) {
@@ -79,7 +86,7 @@ public final class JobScheduleController {
     }
     
     /**
-     * Reschedule job.
+     * Reschedule job.--更改cron表达式
      * 
      * @param cron CRON expression
      */
@@ -113,7 +120,7 @@ public final class JobScheduleController {
     }
     
     /**
-     * Judge job is pause or not.
+     * Judge job is pause or not --判断job是否暂停.
      * 
      * @return job is pause or not
      */
@@ -126,7 +133,7 @@ public final class JobScheduleController {
     }
     
     /**
-     * Pause job.
+     * Pause job --暂停job.
      */
     public synchronized void pauseJob() {
         try {
@@ -139,7 +146,7 @@ public final class JobScheduleController {
     }
     
     /**
-     * Resume job.
+     * Resume job --恢复job.
      */
     public synchronized void resumeJob() {
         try {
@@ -152,7 +159,7 @@ public final class JobScheduleController {
     }
     
     /**
-     * Trigger job.
+     * Trigger job --触发job.
      */
     public synchronized void triggerJob() {
         try {
@@ -165,7 +172,7 @@ public final class JobScheduleController {
     }
     
     /**
-     * Shutdown scheduler.
+     * Shutdown scheduler --关闭调度器
      */
     public synchronized void shutdown() {
         shutdown(false);

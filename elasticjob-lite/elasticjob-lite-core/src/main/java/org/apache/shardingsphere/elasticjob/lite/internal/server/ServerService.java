@@ -53,11 +53,9 @@ public final class ServerService {
             jobNodeStorage.fillJobNode(serverNode.getServerNode(JobRegistry.getInstance().getJobInstance(jobName).getIp()), enabled ? ServerStatus.ENABLED.name() : ServerStatus.DISABLED.name());
         }
     }
-    
+
     /**
-     * Judge has available servers or not.
-     * 
-     * @return has available servers or not
+     * 持久化作业服务器上线信息.
      */
     public boolean hasAvailableServers() {
         List<String> servers = jobNodeStorage.getJobNodeChildrenKeys(ServerNode.ROOT);

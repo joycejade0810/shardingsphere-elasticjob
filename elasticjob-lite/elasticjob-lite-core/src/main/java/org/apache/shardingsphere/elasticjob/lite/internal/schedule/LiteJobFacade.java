@@ -46,19 +46,33 @@ import java.util.List;
  */
 @Slf4j
 public final class LiteJobFacade implements JobFacade {
-    
+    /**
+     * 作业配置服务
+     */
     private final ConfigurationService configService;
-    
+    /**
+     * 作业分片服务
+     */
     private final ShardingService shardingService;
-    
+    /**
+     * 作业运行时上下文服务
+     */
     private final ExecutionContextService executionContextService;
-    
+    /**
+     * 执行作业服务
+     */
     private final ExecutionService executionService;
-    
+    /**
+     * 作业失效转移服务
+     */
     private final FailoverService failoverService;
-    
+    /**
+     * 作业监听器数组
+     */
     private final List<ElasticJobListener> elasticJobListeners;
-    
+    /**
+     * 作业事件总线
+     */
     private final JobEventBus jobEventBus;
     
     public LiteJobFacade(final CoordinatorRegistryCenter regCenter, final String jobName, final List<ElasticJobListener> elasticJobListeners, final TracingConfiguration tracingConfig) {
@@ -100,22 +114,33 @@ public final class LiteJobFacade implements JobFacade {
             failoverService.updateFailoverComplete(shardingContexts.getShardingItemParameters().keySet());
         }
     }
-    
+
+    /**
+     *
+     * @return
+     */
     @Override
     public ShardingContexts getShardingContexts() {
+        // 获得 失效转移的作业分片项
         boolean isFailover = configService.load(true).isFailover();
         if (isFailover) {
             List<Integer> failoverShardingItems = failoverService.getLocalFailoverItems();
             if (!failoverShardingItems.isEmpty()) {
+                //获取当前作业服务器分片上下文
                 return executionContextService.getJobShardingContext(failoverShardingItems);
             }
         }
+        //作业分片，如果需要分片且当前节点为主节点
         shardingService.shardingIfNecessary();
+        //获得 分配在本机的作业分片项
         List<Integer> shardingItems = shardingService.getLocalShardingItems();
+        // 移除 分配在本机的失效转移的作业分片项目
         if (isFailover) {
             shardingItems.removeAll(failoverService.getLocalTakeOffItems());
         }
+        // 移除 被禁用的作业分片项
         shardingItems.removeAll(executionService.getDisabledItems(shardingItems));
+        //获取当前作业服务器分片上下文
         return executionContextService.getJobShardingContext(shardingItems);
     }
     

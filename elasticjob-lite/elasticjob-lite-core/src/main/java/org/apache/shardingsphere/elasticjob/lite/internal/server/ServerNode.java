@@ -27,7 +27,8 @@ import java.util.regex.Pattern;
 
 /**
  * Server node.
- */
+ * 服务器节点路径
+ * */
 public final class ServerNode {
     
     public static final String ROOT = "servers";

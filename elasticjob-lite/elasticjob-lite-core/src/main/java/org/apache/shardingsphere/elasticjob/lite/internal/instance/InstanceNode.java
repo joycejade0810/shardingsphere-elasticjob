@@ -22,17 +22,25 @@ import org.apache.shardingsphere.elasticjob.lite.internal.storage.JobNodePath;
 
 /**
  * Instance node.
+ * 运行实例节点路径
  */
 public final class InstanceNode {
     
     public static final String ROOT = "instances";
-    
+    /**
+     * 运行实例信息根节点.
+     */
     private static final String INSTANCES = ROOT + "/%s";
     
     private final String jobName;
     
     private final JobNodePath jobNodePath;
-    
+
+    /**
+     * 获取当前运行实例节点路径
+     *
+     * @return 当前运行实例节点路径
+     */
     public InstanceNode(final String jobName) {
         this.jobName = jobName;
         jobNodePath = new JobNodePath(jobName);

@@ -27,22 +27,33 @@ import java.util.UUID;
 
 /**
  * Job execution event.
+ * 作业执行追踪事件
  */
 @RequiredArgsConstructor
 @AllArgsConstructor
 @Getter
 public final class JobExecutionEvent implements JobEvent {
-    
+    /**
+     * 主键
+     */
     private String id = UUID.randomUUID().toString();
-    
+    /**
+     * 作业名称
+     */
     private final String hostname;
     
     private final String ip;
-    
+    /**
+     * 作业任务ID
+     */
     private final String taskId;
-    
+    /**
+     * 作业名称
+     */
     private final String jobName;
-    
+    /**
+     * 任务来源
+     */
     private final ExecutionSource source;
     
     private final int shardingItem;
@@ -88,7 +99,17 @@ public final class JobExecutionEvent implements JobEvent {
      * Execution source.
      */
     public enum ExecutionSource {
-        
-        NORMAL_TRIGGER, MISFIRE, FAILOVER
+        /**
+         * 普通触发执行
+         */
+        NORMAL_TRIGGER,
+        /**
+         * 被错过执行
+         */
+        MISFIRE,
+        /**
+         * 失败转移后执行
+         */
+        FAILOVER
     }
 }

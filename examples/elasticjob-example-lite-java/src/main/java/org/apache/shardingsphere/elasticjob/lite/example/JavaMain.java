@@ -38,9 +38,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermissions;
 
+//todo 1.调试入口
 public final class JavaMain {
     
-    private static final int EMBED_ZOOKEEPER_PORT = 4181;
+    private static final int EMBED_ZOOKEEPER_PORT = 2181;
     
     private static final String ZOOKEEPER_CONNECTION_STRING = "localhost:" + EMBED_ZOOKEEPER_PORT;
     
@@ -64,6 +65,7 @@ public final class JavaMain {
         EmbedZookeeperServer.start(EMBED_ZOOKEEPER_PORT);
         CoordinatorRegistryCenter regCenter = setUpRegistryCenter();
         TracingConfiguration<DataSource> tracingConfig = new TracingConfiguration<>("RDB", setUpEventTraceDataSource());
+        //启动5中类型的job，HttpJob，SimpleJob，DataflowJob，ScriptJob，OneOffJob  todo 区别？
         setUpHttpJob(regCenter, tracingConfig);
         setUpSimpleJob(regCenter, tracingConfig);
         setUpDataflowJob(regCenter, tracingConfig);
@@ -94,7 +96,8 @@ public final class JavaMain {
                 .cron("0/5 * * * * ?").shardingItemParameters("0=Beijing,1=Shanghai,2=Guangzhou").build(), tracingConfig).schedule();
         
     }
-    
+
+    //todo 2.简单看SimpleJob
     private static void setUpSimpleJob(final CoordinatorRegistryCenter regCenter, final TracingConfiguration<DataSource> tracingConfig) {
         new ScheduleJobBootstrap(regCenter, new JavaSimpleJob(), JobConfiguration.newBuilder("javaSimpleJob", 3)
                 .cron("0/5 * * * * ?").shardingItemParameters("0=Beijing,1=Shanghai,2=Guangzhou").build(), tracingConfig).schedule();

@@ -28,7 +28,8 @@ import java.util.Map;
 
 /**
  * Sharding strategy which for average by sharding item.
- * 
+ * 基于平均分配算法的分片策略
+ *
  * <p>
  * If the job server number and sharding count cannot be divided, 
  * the redundant sharding item that cannot be divided will be added to the server with small sequence number in turn.
@@ -38,16 +39,23 @@ import java.util.Map;
  * 1. If there are 3 job servers and the total sharding count is 9, each job server is divided into: 1=[0,1,2], 2=[3,4,5], 3=[6,7,8];
  * 2. If there are 3 job servers and the total sharding count is 8, each job server is divided into: 1=[0,1,6], 2=[2,3,7], 3=[4,5];
  * 3. If there are 3 job servers and the total sharding count is 10, each job server is divided into: 1=[0,1,2,9], 2=[3,4,5], 3=[6,7,8].
+ * 如果分片不能整除，则不能整除的多余分片将依次追加到序号小的作业节点。如：
+ * 如果有3台作业节点，分成9片，则每台作业节点分到的分片是：1=[0,1,2], 2=[3,4,5], 3=[6,7,8]
+ * 如果有3台作业节点，分成8片，则每台作业节点分到的分片是：1=[0,1,6], 2=[2,3,7], 3=[4,5]
+ * 如果有3台作业节点，分成10片，则每台作业节点分到的分片是：1=[0,1,2,9], 2=[3,4,5], 3=[6,7,8]
  * </p>
  */
 public final class AverageAllocationJobShardingStrategy implements JobShardingStrategy {
     
     @Override
     public Map<JobInstance, List<Integer>> sharding(final List<JobInstance> jobInstances, final String jobName, final int shardingTotalCount) {
+        // 不存在 作业运行实例
         if (jobInstances.isEmpty()) {
             return Collections.emptyMap();
         }
+        // 分配能被整除的部分
         Map<JobInstance, List<Integer>> result = shardingAliquot(jobInstances, shardingTotalCount);
+        // 分配不能被整除的部分
         addAliquant(jobInstances, shardingTotalCount, result);
         return result;
     }
@@ -58,6 +66,7 @@ public final class AverageAllocationJobShardingStrategy implements JobShardingSt
         int count = 0;
         for (JobInstance each : shardingUnits) {
             List<Integer> shardingItems = new ArrayList<>(itemCountPerSharding + 1);
+            // 顺序向下分配
             for (int i = count * itemCountPerSharding; i < (count + 1) * itemCountPerSharding; i++) {
                 shardingItems.add(i);
             }

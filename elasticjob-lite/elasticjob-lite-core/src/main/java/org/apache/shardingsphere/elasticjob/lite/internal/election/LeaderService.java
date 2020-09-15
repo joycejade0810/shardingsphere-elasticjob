@@ -28,6 +28,7 @@ import org.apache.shardingsphere.elasticjob.infra.concurrent.BlockUtils;
 
 /**
  * Leader service.
+ *  选举主节点
  */
 @Slf4j
 public final class LeaderService {
@@ -52,24 +53,25 @@ public final class LeaderService {
         jobNodeStorage.executeInLeader(LeaderNode.LATCH, new LeaderElectionExecutionCallback());
         log.debug("Leader election completed.");
     }
-    
+
     /**
-     * Judge current server is leader or not.
-     * 
-     * <p>
-     * If leader is electing, this method will block until leader elected success.
-     * </p>
-     * 
-     * @return current server is leader or not
+     * 判断当前节点是否是主节点.
+     *
+     * 如果主节点正在选举中而导致取不到主节点, 则阻塞至主节点选举完成再返回.
+     *
+     * @return 当前节点是否是主节点
      */
     public boolean isLeaderUntilBlock() {
+        // 不存在主节点 && 有可用的服务器节点
         while (!hasLeader() && serverService.hasAvailableServers()) {
             log.info("Leader is electing, waiting for {} ms", 100);
+            //选举不到主节点进行等待，避免不间断、无间隔的进行主节点选举。
             BlockUtils.waitingShortTime();
             if (!JobRegistry.getInstance().isShutdown(jobName) && serverService.isAvailableServer(JobRegistry.getInstance().getJobInstance(jobName).getIp())) {
                 electLeader();
             }
         }
+        // 不存在主节点 && 有可用的服务器节点
         return isLeader();
     }
     
@@ -81,18 +83,23 @@ public final class LeaderService {
     public boolean isLeader() {
         return !JobRegistry.getInstance().isShutdown(jobName) && JobRegistry.getInstance().getJobInstance(jobName).getJobInstanceId().equals(jobNodeStorage.getJobNodeData(LeaderNode.INSTANCE));
     }
-    
+
     /**
-     * Judge has leader or not in current time.
-     * 
-     * @return has leader or not in current time
+     * 判断是否已经有主节点.
+     *
+     * @return 是否已经有主节点
      */
     public boolean hasLeader() {
         return jobNodeStorage.isJobNodeExisted(LeaderNode.INSTANCE);
     }
     
     /**
-     * Remove leader and trigger leader election.
+     * 删除主节点供重新选举
+     *  删除主节点时机
+         * 第一种，主节点进程正常关闭时。JobShutdownHookPlugin #shutdown()
+         * 第二种，主节点进程 CRASHED 时。
+         * 第三种，作业被禁用时。LeaderAbdicationJobListener #dataChanged()
+         * 第四种，主节点进程远程关闭。 InstanceShutdownStatusJobListener #dataChanged()
      */
     public void removeLeader() {
         jobNodeStorage.removeJobNodeIfExisted(LeaderNode.INSTANCE);

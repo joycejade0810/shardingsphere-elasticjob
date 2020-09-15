@@ -28,25 +28,33 @@ import java.util.Properties;
 
 /**
  * ElasticJob configuration.
+ * job 配置类
  */
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public final class JobConfiguration {
-    
+
+    //作业名称
     private final String jobName;
-    
+
+    //cron表达式，用于控制作业触发时间
     private final String cron;
-    
+
+    //作业分片总数。如果一个作业启动超过作业分片总数的节点，只有 shardingTotalCount会执行作业。
     private final int shardingTotalCount;
-    
+
+    //分片序列号和参数 片序列号和参数用等号分隔，多个键值对用逗号分隔  **分片序列号从0开始，不可大于或等于作业分片总数 如： 0=a,1=b,2=c
     private final String shardingItemParameters;
-    
+
+    //作业自定义参数 可通过传递该参数为作业调度的业务方法传参，用于实现带参数的作业     //例：每次获取的数据量、作业实例从数据库读取的主键等
     private final String jobParameter;
     
     private final boolean monitorExecution;
-    
+
+    //是否开启作业执行失效转移。开启表示如果作业在一次作业执行中途宕机，允许将该次未完成的作业在另一作业节点上补偿执行
     private final boolean failover;
-    
+
+    //是否开启错过作业重新执行
     private final boolean misfire;
     
     private final int maxTimeDiffSeconds;
@@ -58,7 +66,8 @@ public final class JobConfiguration {
     private final String jobExecutorServiceHandlerType;
     
     private final String jobErrorHandlerType;
-    
+
+    //作业描述
     private final String description;
     
     private final Properties props;
@@ -90,15 +99,18 @@ public final class JobConfiguration {
         private String shardingItemParameters = "";
         
         private String jobParameter = "";
-        
+
+        //监控作业运行时状态
         private boolean monitorExecution = true;
         
         private boolean failover;
         
         private boolean misfire = true;
-        
+
+        //设置最大容忍的本机与注册中心的时间误差秒数
         private int maxTimeDiffSeconds = -1;
-        
+
+        //修复作业服务器不一致状态服务调度间隔时间，配置为小于1的任意值表示不执行修复
         private int reconcileIntervalMinutes = 10;
         
         private String jobShardingStrategyType;
@@ -110,9 +122,11 @@ public final class JobConfiguration {
         private String description = "";
         
         private final Properties props = new Properties();
-        
+
+        //作业是否禁用执行
         private boolean disabled;
-        
+
+        //设置使用本地作业配置覆盖注册中心的作业配置
         private boolean overwrite;
     
         /**
@@ -334,7 +348,8 @@ public final class JobConfiguration {
         
         /**
          * Build ElasticJob configuration.
-         * 
+         *
+         * 生成器模式
          * @return ElasticJob configuration
          */
         public final JobConfiguration build() {
