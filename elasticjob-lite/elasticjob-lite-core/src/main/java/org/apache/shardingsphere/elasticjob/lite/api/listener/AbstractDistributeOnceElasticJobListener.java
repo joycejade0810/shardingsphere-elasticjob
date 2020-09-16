@@ -29,17 +29,29 @@ import java.util.Set;
 
 /**
  * Distributed once elasticjob listener.
+ * 在分布式作业中只执行一次的监听器。
+ * 若作业处理数据库数据，处理完成后只需一个节点完成数据清理任务即可。此类型任务处理复杂，需同步分布式环境下作业的状态同步，提供了超时设置来避免作业不同步导致的死锁，请谨慎使用。
  */
 public abstract class AbstractDistributeOnceElasticJobListener implements ElasticJobListener {
-    
+    /**
+     * 开始超时时间
+     */
     private final long startedTimeoutMilliseconds;
-    
+    /**
+     * 开始等待对象
+     */
     private final Object startedWait = new Object();
-    
+    /**
+     * 完成超时时间
+     */
     private final long completedTimeoutMilliseconds;
-    
+    /**
+     * 完成等待对象
+     */
     private final Object completedWait = new Object();
-    
+    /**
+     * 保证分布式任务全部开始和结束状态的服务
+     */
     @Setter
     private GuaranteeService guaranteeService;
     
@@ -52,16 +64,21 @@ public abstract class AbstractDistributeOnceElasticJobListener implements Elasti
     
     @Override
     public final void beforeJobExecuted(final ShardingContexts shardingContexts) {
+        // 注册作业分片项开始运行
         Set<Integer> shardingItems = shardingContexts.getShardingItemParameters().keySet();
         guaranteeService.registerStart(shardingItems);
         while (!guaranteeService.isRegisterStartSuccess(shardingItems)) {
             BlockUtils.waitingShortTime();
         }
+        // 判断是否所有的分片项开始运行
         if (guaranteeService.isAllStarted()) {
+            // 执行
             doBeforeJobExecutedAtLastStarted(shardingContexts);
+            // 清理启动信息
             guaranteeService.clearAllStartedInfo();
             return;
         }
+        // 等待
         long before = timeService.getCurrentMillis();
         try {
             synchronized (startedWait) {
@@ -70,7 +87,9 @@ public abstract class AbstractDistributeOnceElasticJobListener implements Elasti
         } catch (final InterruptedException ex) {
             Thread.interrupted();
         }
+        // 等待超时
         if (timeService.getCurrentMillis() - before >= startedTimeoutMilliseconds) {
+            // 清理启动信息
             guaranteeService.clearAllStartedInfo();
             handleTimeout(startedTimeoutMilliseconds);
         }

@@ -24,7 +24,7 @@ import java.io.IOException;
 
 /**
  * Embed ZooKeeper.
- * 
+ * 嵌入Zookeeper 只用于examples
  * <p>
  *     Only used for examples
  * </p>

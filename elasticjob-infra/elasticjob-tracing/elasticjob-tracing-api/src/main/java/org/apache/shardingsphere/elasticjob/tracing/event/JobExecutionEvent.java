@@ -38,10 +38,12 @@ public final class JobExecutionEvent implements JobEvent {
      */
     private String id = UUID.randomUUID().toString();
     /**
-     * 作业名称
+     * 主机名称
      */
     private final String hostname;
-    
+    /**
+     * IP
+     */
     private final String ip;
     /**
      * 作业任务ID
@@ -55,17 +57,27 @@ public final class JobExecutionEvent implements JobEvent {
      * 任务来源
      */
     private final ExecutionSource source;
-    
+    /**
+     * 作业分片项
+     */
     private final int shardingItem;
-    
+    /**
+     * 开始时间
+     */
     private Date startTime = new Date();
-    
+    /**
+     * 结束时间
+     */
     @Setter
     private Date completeTime;
-    
+    /**
+     * 是否执行成功
+     */
     @Setter
     private boolean success;
-    
+    /**
+     * 执行失败原因
+     */
     @Setter
     private String failureCause;
     

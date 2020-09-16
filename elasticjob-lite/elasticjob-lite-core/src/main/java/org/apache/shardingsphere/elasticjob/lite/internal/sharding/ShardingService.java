@@ -203,8 +203,9 @@ public final class ShardingService {
     
     /**
      * Query has sharding info in offline servers or not.
-     * 
-     * @return has sharding info in offline servers or not
+     * 查询是包含有分片节点的不在线服务器.
+     *
+     * @return has sharding info in offline servers or not 是包含有分片节点的不在线服务器
      */
     public boolean hasShardingInfoInOfflineServers() {
         List<String> onlineInstances = jobNodeStorage.getJobNodeChildrenKeys(InstanceNode.ROOT);

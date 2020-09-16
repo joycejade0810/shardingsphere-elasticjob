@@ -65,7 +65,7 @@ public final class GuaranteeService {
     
     /**
      * Judge whether job's sharding items are all started.
-     *
+     * 判断是否所有的任务均启动完毕.
      * @return job's sharding items are all started or not
      */
     public boolean isAllStarted() {
@@ -75,6 +75,7 @@ public final class GuaranteeService {
     
     /**
      * Clear all started job's info.
+     * 清理所有任务启动信息.
      */
     public void clearAllStartedInfo() {
         jobNodeStorage.removeJobNodeIfExisted(GuaranteeNode.STARTED_ROOT);

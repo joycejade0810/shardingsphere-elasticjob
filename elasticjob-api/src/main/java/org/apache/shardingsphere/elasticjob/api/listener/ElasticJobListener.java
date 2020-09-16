@@ -19,21 +19,22 @@ package org.apache.shardingsphere.elasticjob.api.listener;
 
 /**
  * ElasticJob listener.
- * 监听器
+ * 作业监听器接口,每台作业节点均执行
+ * 若作业处理作业服务器的文件，处理完成后删除文件，可考虑使用每个节点均执行清理任务。此类型任务实现简单，且无需考虑全局分布式任务是否完成，请尽量使用此类型监听器。
  */
 public interface ElasticJobListener {
-    
+
     /**
-     * Called before job executed.
-     * 
-     * @param shardingContexts sharding contexts
+     * 作业执行前的执行的方法.
+     *
+     * @param shardingContexts 分片上下文
      */
     void beforeJobExecuted(ShardingContexts shardingContexts);
-    
+
     /**
-     * Called after job executed.
+     * 作业执行后的执行的方法.
      *
-     * @param shardingContexts sharding contexts
+     * @param shardingContexts 分片上下文
      */
     void afterJobExecuted(ShardingContexts shardingContexts);
 }

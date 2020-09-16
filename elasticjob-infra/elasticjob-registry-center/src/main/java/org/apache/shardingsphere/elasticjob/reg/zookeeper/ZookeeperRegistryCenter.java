@@ -69,11 +69,11 @@ public final class ZookeeperRegistryCenter implements CoordinatorRegistryCenter 
     }
 
     /**
-     *
+     * 初始化zk注册中心
      */
     @Override
     public void init() {
-        log.debug("Elastic job: zookeeper registry center init, server lists is: {}.", zkConfig.getServerLists());
+        log.info("Elastic job: zookeeper registry center init, server lists is: {}.", zkConfig.getServerLists());
         CuratorFrameworkFactory.Builder builder = CuratorFrameworkFactory.builder()
                 .connectString(zkConfig.getServerLists())
                 .retryPolicy(new ExponentialBackoffRetry(zkConfig.getBaseSleepTimeMilliseconds(), zkConfig.getMaxRetries(), zkConfig.getMaxSleepTimeMilliseconds()))

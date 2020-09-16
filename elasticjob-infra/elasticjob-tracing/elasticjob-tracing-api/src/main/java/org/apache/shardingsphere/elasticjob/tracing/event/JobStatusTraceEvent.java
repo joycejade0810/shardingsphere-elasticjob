@@ -58,10 +58,36 @@ public final class JobStatusTraceEvent implements JobEvent {
     private Date creationTime = new Date();
     
     public enum State {
-        TASK_STAGING, TASK_RUNNING, TASK_FINISHED, TASK_KILLED, TASK_LOST, TASK_FAILED, TASK_ERROR, TASK_DROPPED, TASK_GONE, TASK_GONE_BY_OPERATOR, TASK_UNREACHABLE, TASK_UNKNOWN
+        /**
+         * 开始中
+         */
+        TASK_STAGING,
+        /**
+         * 运行中
+         */
+        TASK_RUNNING,
+        /**
+         * 完成（正常）
+         */
+        TASK_FINISHED,
+        /**
+         * 完成（异常）
+         */
+        TASK_KILLED, TASK_LOST, TASK_FAILED, TASK_ERROR, TASK_DROPPED, TASK_GONE, TASK_GONE_BY_OPERATOR, TASK_UNREACHABLE, TASK_UNKNOWN
     }
     
     public enum Source {
-        CLOUD_SCHEDULER, CLOUD_EXECUTOR, LITE_EXECUTOR
+        /**
+         * Elastic-Job-Cloud 调度器
+         */
+        CLOUD_SCHEDULER,
+        /**
+         * Elastic-Job-Cloud 执行器
+         */
+        CLOUD_EXECUTOR,
+        /**
+         * Elastic-Job-Lite 执行器
+         */
+        LITE_EXECUTOR
     }
 }

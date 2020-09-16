@@ -25,6 +25,7 @@ import org.apache.shardingsphere.elasticjob.api.JobConfiguration;
 import org.apache.shardingsphere.elasticjob.dataflow.props.DataflowJobProperties;
 import org.apache.shardingsphere.elasticjob.lite.example.job.dataflow.JavaDataflowJob;
 import org.apache.shardingsphere.elasticjob.lite.example.job.simple.JavaSimpleJob;
+import org.apache.shardingsphere.elasticjob.lite.example.job.simple.abc;
 import org.apache.shardingsphere.elasticjob.reg.base.CoordinatorRegistryCenter;
 import org.apache.shardingsphere.elasticjob.reg.zookeeper.ZookeeperConfiguration;
 import org.apache.shardingsphere.elasticjob.reg.zookeeper.ZookeeperRegistryCenter;
@@ -41,7 +42,7 @@ import java.nio.file.attribute.PosixFilePermissions;
 //todo 1.调试入口
 public final class JavaMain {
     
-    private static final int EMBED_ZOOKEEPER_PORT = 2181;
+    private static final int EMBED_ZOOKEEPER_PORT = 4181;
     
     private static final String ZOOKEEPER_CONNECTION_STRING = "localhost:" + EMBED_ZOOKEEPER_PORT;
     
@@ -63,16 +64,17 @@ public final class JavaMain {
     public static void main(final String[] args) throws IOException {
     // CHECKSTYLE:ON
         EmbedZookeeperServer.start(EMBED_ZOOKEEPER_PORT);
+        //
         CoordinatorRegistryCenter regCenter = setUpRegistryCenter();
         TracingConfiguration<DataSource> tracingConfig = new TracingConfiguration<>("RDB", setUpEventTraceDataSource());
-        //启动5中类型的job，HttpJob，SimpleJob，DataflowJob，ScriptJob，OneOffJob  todo 区别？
-        setUpHttpJob(regCenter, tracingConfig);
+        //启动5中类型的job，HttpJob，SimpleJob，DataflowJob，ScriptJob，OneOffJob
+//        setUpHttpJob(regCenter, tracingConfig);
         setUpSimpleJob(regCenter, tracingConfig);
-        setUpDataflowJob(regCenter, tracingConfig);
-        setUpScriptJob(regCenter, tracingConfig);
-        setUpOneOffJob(regCenter, tracingConfig);
+//        setUpDataflowJob(regCenter, tracingConfig);
+//        setUpScriptJob(regCenter, tracingConfig);
+//        setUpOneOffJob(regCenter, tracingConfig);
     }
-    
+
     private static CoordinatorRegistryCenter setUpRegistryCenter() {
         ZookeeperConfiguration zkConfig = new ZookeeperConfiguration(ZOOKEEPER_CONNECTION_STRING, JOB_NAMESPACE);
         CoordinatorRegistryCenter result = new ZookeeperRegistryCenter(zkConfig);
@@ -99,7 +101,7 @@ public final class JavaMain {
 
     //todo 2.简单看SimpleJob
     private static void setUpSimpleJob(final CoordinatorRegistryCenter regCenter, final TracingConfiguration<DataSource> tracingConfig) {
-        new ScheduleJobBootstrap(regCenter, new JavaSimpleJob(), JobConfiguration.newBuilder("javaSimpleJob", 3)
+        new ScheduleJobBootstrap(regCenter, new abc(), JobConfiguration.newBuilder("abc", 3)
                 .cron("0/5 * * * * ?").shardingItemParameters("0=Beijing,1=Shanghai,2=Guangzhou").build(), tracingConfig).schedule();
     }
     
